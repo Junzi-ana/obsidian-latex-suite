@@ -2,9 +2,64 @@ import { Snippet } from "../snippets/snippets";
 import { Environment } from "../snippets/environment";
 import { DEFAULT_SNIPPETS } from "src/utils/default_snippets";
 import { DEFAULT_SNIPPET_VARIABLES } from "src/utils/default_snippet_variables";
+import type { EditorView } from "@codemirror/view";
 import * as v from "valibot"
 
 export type snippetDebugLevel = "off" | "info" | "verbose";
+
+/**
+ * A local (document / tag scoped) snippet entry, as edited in the local
+ * snippet UI. Stored as structured JSON, so no manual backslash escaping is
+ * needed (unlike the global snippet textarea).
+ */
+export type LocalSnippetEntry = {
+	trigger: string;
+	replacement: string;
+	options: string;
+	priority?: number;
+	description?: string;
+};
+
+/**
+ * A local snippet *item*. Unlike the global snippets, one item carries its
+ * own bindings: it may be bound to a single note (`file` = its vault path)
+ * and to any number of tags (`tags`). Both are optional but at least one must
+ * be set, so a snippet may apply to exactly one note, to every note carrying
+ * any of its tags, or to a note *and* all notes carrying those tags. Editing
+ * an item later can change its bindings freely.
+ */
+export type LocalSnippetItem = LocalSnippetEntry & {
+	file?: string;
+	tags?: string[];
+};
+
+/**
+ * Local snippets are stored as one flat, ordered list of items. When a note
+ * is active, the applicable items are the ones bound to that note, followed
+ * by the ones bound to each of the note's tags (sorted by tag name); all of
+ * them are tried before the global snippets, so a local snippet with the same
+ * trigger wins over a global one.
+ */
+export type LocalSnippetData = {
+	items: LocalSnippetItem[];
+};
+
+/**
+ * Runtime hook that the core snippet matching code uses to reach the store
+ * that holds the per-document / per-tag snippets of the current plugin
+ * instance. Kept structural here so settings.ts stays free of import cycles.
+ */
+export interface LocalSnippetStoreLike {
+	/** true when no local snippets exist at all (fast path for keypresses) */
+	isEmpty(): boolean;
+	/**
+	 * The parsed local snippets that apply to `view` (its note + the note's
+	 * tags), in priority order, or an empty array when none apply.
+	 */
+	getSnippetsFor(view: EditorView): Snippet[];
+	/** open the "create local snippet from selection" dialog for `view` */
+	openCreateLocalSnippetModal(view: EditorView): boolean;
+}
 
 type CMKeyMap = string;
 type VimKeyMap = string;
@@ -76,12 +131,13 @@ interface LatexSuiteParsedSettings {
 	forceMathLanguages: string[];
 }
 
-export type LatexSuitePluginSettings = {snippets: string, snippetVariables: string} & LatexSuiteBasicSettings & LatexSuiteRawSettings & LatexSuiteCMKeymapSettings;
-export type LatexSuiteCMSettings = {snippets: Snippet[]} & LatexSuiteBasicSettings & LatexSuiteParsedSettings & LatexSuiteCMKeymapSettings;
+export type LatexSuitePluginSettings = {snippets: string, snippetVariables: string, localSnippets: LocalSnippetData} & LatexSuiteBasicSettings & LatexSuiteRawSettings & LatexSuiteCMKeymapSettings;
+export type LatexSuiteCMSettings = {snippets: Snippet[], localSnippetStore?: LocalSnippetStoreLike} & LatexSuiteBasicSettings & LatexSuiteParsedSettings & LatexSuiteCMKeymapSettings;
 
 export const DEFAULT_SETTINGS: LatexSuitePluginSettings = {
 	snippets: DEFAULT_SNIPPETS,
 	snippetVariables: DEFAULT_SNIPPET_VARIABLES,
+	localSnippets: { items: [] },
 
 	// Basic settings
 	snippetsEnabled: true,

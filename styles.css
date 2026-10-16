@@ -290,3 +290,491 @@ and limit the height.
 .latex-suite-highlighted-dollar-code {
 	color: #54940b;
 }
+
+/* ============================================================ */
+/* Local snippet workspace v2 (combined create/edit + list)        */
+/* ============================================================ */
+.latex-suite-local-workspace-modal .ls-head {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 0.9rem;
+	flex-wrap: wrap;
+}
+.latex-suite-local-workspace-modal .ls-title {
+	font-size: 1.25em;
+	font-weight: 700;
+	color: var(--text-normal);
+}
+.latex-suite-local-workspace-modal .ls-subtitle {
+	margin-top: 0.15rem;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+.latex-suite-local-workspace-modal .ls-stats {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-accent);
+	background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+	border: 1px solid color-mix(in srgb, var(--interactive-accent) 30%, transparent);
+	padding: 0.2rem 0.7rem;
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.latex-suite-local-workspace-modal .ls-layout {
+	display: flex;
+	gap: 0.9rem;
+	height: min(72vh, 640px);
+}
+.latex-suite-local-workspace-modal .ls-left,
+.latex-suite-local-workspace-modal .ls-right {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	padding: 0.9rem 1rem;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+.latex-suite-local-workspace-modal .ls-left { flex: 0 0 40%; }
+.latex-suite-local-workspace-modal .ls-right { flex: 1 1 60%; }
+
+/* ---- pane heads ---- */
+.latex-suite-local-workspace-modal .ls-pane-head {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.latex-suite-local-workspace-modal .ls-pane-title {
+	font-weight: 650;
+	font-size: var(--font-ui-medium);
+}
+.latex-suite-local-workspace-modal .ls-scope-pill,
+.latex-suite-local-workspace-modal .ls-group-count {
+	font-size: var(--font-ui-smaller);
+	padding: 0.05rem 0.6rem;
+	border-radius: 999px;
+	background: var(--background-modifier-hover);
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+.latex-suite-local-workspace-modal .ls-edit-note,
+.latex-suite-local-workspace-modal .ls-scope-desc {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+
+/* ---- segmented scope toggle ---- */
+.latex-suite-local-workspace-modal .ls-seg {
+	display: inline-flex;
+	gap: 0.2rem;
+	background: var(--background-modifier-hover);
+	border-radius: var(--radius-m);
+	padding: 0.2rem;
+}
+.latex-suite-local-workspace-modal .ls-seg-btn {
+	border: none;
+	background: transparent;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	padding: 0.25rem 0.75rem;
+	border-radius: calc(var(--radius-m) - 2px);
+	cursor: pointer;
+}
+.latex-suite-local-workspace-modal .ls-seg-btn:hover { color: var(--text-normal); }
+.latex-suite-local-workspace-modal .ls-seg-btn.is-active {
+	background: var(--background-primary);
+	color: var(--text-normal);
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+}
+
+/* ---- tag chips ---- */
+.latex-suite-local-workspace-modal .ls-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+	align-items: center;
+}
+.latex-suite-local-workspace-modal .ls-chip {
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	padding: 0.15rem 0.6rem;
+	border-radius: 999px;
+	cursor: pointer;
+}
+.latex-suite-local-workspace-modal .ls-chip:hover { color: var(--text-normal); }
+.latex-suite-local-workspace-modal .ls-chip.is-active {
+	border-color: var(--interactive-accent);
+	color: var(--text-accent);
+	background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+}
+.latex-suite-local-workspace-modal .ls-custom-tag input { width: 100%; }
+
+/* ---- fields ---- */
+.latex-suite-local-workspace-modal .ls-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.latex-suite-local-workspace-modal .ls-field-row {
+	display: flex;
+	gap: 0.6rem;
+}
+.latex-suite-local-workspace-modal .ls-grow { flex: 1 1 auto; }
+.latex-suite-local-workspace-modal .ls-narrow { flex: 0 0 8.5rem; }
+.latex-suite-local-workspace-modal .ls-field { display: flex; flex-direction: column; gap: 0.15rem; }
+.latex-suite-local-workspace-modal .ls-field-label {
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	color: var(--text-normal);
+}
+.latex-suite-local-workspace-modal .ls-field-hint,
+.latex-suite-local-workspace-modal .ls-options-hint {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+.latex-suite-local-workspace-modal .ls-options-hint {
+	margin-top: -0.15rem;
+	line-height: 1.35;
+}
+.latex-suite-local-workspace-modal .ls-input {
+	width: 100%;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border-radius: var(--radius-s);
+	padding: 0.35rem 0.55rem;
+	font-size: var(--font-ui-small);
+	box-sizing: border-box;
+}
+.latex-suite-local-workspace-modal .ls-input:focus {
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 25%, transparent);
+}
+.latex-suite-local-workspace-modal .ls-mono { font-family: var(--font-monospace); }
+.latex-suite-local-workspace-modal .ls-textarea {
+	min-height: 6.5em;
+	resize: vertical;
+	line-height: 1.5;
+}
+.latex-suite-local-workspace-modal .ls-repl-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+}
+
+/* ---- actions ---- */
+.latex-suite-local-workspace-modal .ls-actions {
+	margin-top: auto;
+	padding-top: 0.6rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+	border-top: 1px solid var(--background-modifier-border);
+}
+.latex-suite-local-workspace-modal .ls-action-hint {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+.latex-suite-local-workspace-modal .ls-buttons { display: flex; gap: 0.4rem; }
+.latex-suite-local-workspace-modal .ls-btn {
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	padding: 0.4rem 0.9rem;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+}
+.latex-suite-local-workspace-modal .ls-btn:hover { background: var(--background-modifier-hover); }
+.latex-suite-local-workspace-modal .ls-btn-primary {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: 600;
+}
+.latex-suite-local-workspace-modal .ls-btn-primary:hover {
+	background: var(--interactive-accent-hover);
+	color: var(--text-on-accent);
+}
+
+/* ---- right toolbar ---- */
+.latex-suite-local-workspace-modal .ls-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.latex-suite-local-workspace-modal .ls-search {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	flex: 1 1 auto;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	padding: 0 0.5rem;
+}
+.latex-suite-local-workspace-modal .ls-search:focus-within {
+	border-color: var(--interactive-accent);
+}
+.latex-suite-local-workspace-modal .ls-search-icon { color: var(--text-faint); display: flex; }
+.latex-suite-local-workspace-modal .ls-search-input {
+	flex: 1 1 auto;
+	background: transparent;
+	border: none;
+	color: var(--text-normal);
+	padding: 0.35rem 0;
+	font-size: var(--font-ui-small);
+	outline: none;
+}
+.latex-suite-local-workspace-modal .ls-btn-ghost {
+	border: none;
+	background: transparent;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	padding: 0.2rem 0.5rem;
+}
+.latex-suite-local-workspace-modal .ls-btn-ghost:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+
+/* ---- groups & rows ---- */
+.latex-suite-local-workspace-modal .ls-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.latex-suite-local-workspace-modal .ls-group-head {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.35rem;
+}
+.latex-suite-local-workspace-modal .ls-group-ident {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.latex-suite-local-workspace-modal .ls-group-kind {
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	padding: 0.05rem 0.5rem;
+	border-radius: 999px;
+}
+.latex-suite-local-workspace-modal .ls-kind-file {
+	background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+	color: var(--text-accent);
+}
+.latex-suite-local-workspace-modal .ls-kind-tag {
+	background: color-mix(in srgb, var(--color-purple) 18%, transparent);
+	color: var(--color-purple);
+}
+.latex-suite-local-workspace-modal .ls-group-name {
+	font-weight: 600;
+	font-size: var(--font-ui-small);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.latex-suite-local-workspace-modal .ls-group-open {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-accent);
+	cursor: pointer;
+	text-decoration: none;
+}
+.latex-suite-local-workspace-modal .ls-item {
+	position: relative;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	padding: 0.4rem 0.65rem;
+	padding-right: 2.2rem;
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	transition: border-color 0.12s ease, background 0.12s ease;
+}
+.latex-suite-local-workspace-modal .ls-item:hover {
+	border-color: var(--background-modifier-border-hover);
+	background: var(--background-modifier-hover);
+}
+.latex-suite-local-workspace-modal .ls-item.is-selected {
+	border-color: var(--interactive-accent);
+	background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-primary));
+	box-shadow: inset 3px 0 0 var(--interactive-accent);
+}
+.latex-suite-local-workspace-modal .ls-item-trigger {
+	font-family: var(--font-monospace);
+	font-weight: 600;
+	font-size: var(--font-ui-medium);
+	color: var(--text-normal);
+	word-break: break-all;
+}
+.latex-suite-local-workspace-modal .ls-item-meta {
+	position: absolute;
+	top: 0.45rem;
+	right: 2.1rem;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+.latex-suite-local-workspace-modal .ls-item-desc {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.latex-suite-local-workspace-modal .ls-item-preview {
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	word-break: break-all;
+	white-space: pre-wrap;
+}
+.latex-suite-local-workspace-modal .ls-item-del {
+	position: absolute;
+	top: 0.35rem;
+	right: 0.4rem;
+	border: none;
+	background: transparent;
+	color: var(--text-faint);
+	cursor: pointer;
+	display: flex;
+	padding: 0.15rem;
+	border-radius: var(--radius-s);
+}
+.latex-suite-local-workspace-modal .ls-item-del:hover {
+	color: var(--text-error);
+	background: var(--background-modifier-hover);
+}
+
+.latex-suite-local-workspace-modal .ls-empty {
+	margin: 2rem 0;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	padding: 0 1rem;
+}
+
+/* Local snippet workspace v3: independent bindings & tweaks */
+.latex-suite-local-workspace-modal .ls-bind {
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+	background: color-mix(in srgb, var(--background-modifier-hover) 55%, transparent);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	padding: 0.55rem 0.7rem;
+}
+.latex-suite-local-workspace-modal .ls-bind-row {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	font-size: var(--font-ui-small);
+}
+.latex-suite-local-workspace-modal .ls-bind-check {
+	accent-color: var(--interactive-accent);
+	width: 1rem;
+	height: 1rem;
+	cursor: pointer;
+}
+.latex-suite-local-workspace-modal .ls-bind-label { font-weight: 600; color: var(--text-normal); }
+.latex-suite-local-workspace-modal .ls-bind-file { color: var(--text-muted); }
+.latex-suite-local-workspace-modal .ls-bind-tag-head {
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	color: var(--text-muted);
+	margin-top: 0.15rem;
+}
+.latex-suite-local-workspace-modal .ls-bind-note {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+.latex-suite-local-workspace-modal .ls-bind-bound {
+	display: flex;
+	align-items: center;
+}
+.latex-suite-local-workspace-modal .ls-bound-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-accent);
+	background: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
+	border: 1px solid color-mix(in srgb, var(--interactive-accent) 35%, transparent);
+	padding: 0.1rem 0.5rem;
+	border-radius: 999px;
+}
+.latex-suite-local-workspace-modal .ls-bound-x {
+	cursor: pointer;
+	font-weight: 700;
+	opacity: 0.7;
+}
+.latex-suite-local-workspace-modal .ls-bound-x:hover { opacity: 1; color: var(--text-error); }
+.latex-suite-local-workspace-modal .ls-btn-light {
+	background: color-mix(in srgb, var(--interactive-accent) 10%, var(--background-primary));
+	border-color: color-mix(in srgb, var(--interactive-accent) 45%, var(--background-modifier-border));
+	color: var(--text-accent);
+	font-weight: 600;
+}
+.latex-suite-local-workspace-modal .ls-btn-light:hover {
+	background: color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary));
+	color: var(--text-accent);
+}
+.latex-suite-local-workspace-modal .ls-item-scope {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-accent);
+	opacity: 0.85;
+}
+
+/* Local snippet workspace v4: multi-tag & checkbox polish */
+.latex-suite-local-workspace-modal .ls-bind-check {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 18px;
+	height: 18px;
+	flex: none;
+	margin: 0;
+	padding: 0;
+	border: 1.5px solid var(--background-modifier-border);
+	border-radius: 5px;
+	background: var(--background-primary);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+}
+.latex-suite-local-workspace-modal .ls-bind-check:hover {
+	border-color: var(--interactive-accent);
+}
+.latex-suite-local-workspace-modal .ls-bind-check.is-checked {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+.latex-suite-local-workspace-modal .ls-bind-tick {
+	display: inline-flex;
+	width: 14px;
+	height: 14px;
+}
+.latex-suite-local-workspace-modal .ls-bind-tick svg {
+	width: 100%;
+	height: 100%;
+	stroke-width: 3;
+}
+.latex-suite-local-workspace-modal .ls-bind-label {
+	cursor: pointer;
+	user-select: none;
+}
+.latex-suite-local-workspace-modal .ls-bind-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+	align-items: center;
+}

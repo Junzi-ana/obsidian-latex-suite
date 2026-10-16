@@ -101,7 +101,22 @@ declare global {
 export async function parseSnippets(snippetsStr: string, snippetVariables: SnippetVariables, identifier: string) {
 	window.__latex_suite_require = latex_suite_require(snippetVariables);
 	const rawSnippets = await importRaw(snippetsStr + preamble, identifier);
+	return parseRawSnippets(rawSnippets, snippetVariables);
+}
 
+/**
+ * Synchronously parses raw snippet *objects* (the shape used by the settings
+ * textarea / snippet files after evaluation, e.g. `{trigger, replacement,
+ * options}`) into `Snippet` instances. Local (document/tag scoped) snippets
+ * are stored as such objects, so they reuse the exact same validation,
+ * normalisation and sorting as the global snippets without needing a JS
+ * module import. Throws on the first invalid snippet.
+ */
+export function parseSnippetObjects(rawSnippets: unknown, snippetVariables: SnippetVariables = {}): Snippet[] {
+	return parseRawSnippets(rawSnippets, snippetVariables);
+}
+
+function parseRawSnippets(rawSnippets: unknown, snippetVariables: SnippetVariables): Snippet[] {
 	let parsedSnippets;
 	try {
 		// validate the shape of the raw snippets

@@ -1,9 +1,11 @@
 import { Extension, Prec } from "@codemirror/state";
-import { Plugin, Notice, loadMathJax, addIcon, debounce } from "obsidian";
+import { Plugin, Notice, loadMathJax, addIcon, debounce, TFile } from "obsidian";
 import { getSnippetsFromFiles, getFileSets, getVariablesFromFiles, tryGetVariablesFromUnknownFiles, fileWatch } from "./settings/file_watch";
 import { LatexSuitePluginSettings, DEFAULT_SETTINGS, LatexSuiteCMSettings, processLatexSuiteSettings, LatexSuiteBasicSettings, LatexSuiteRawSettings } from "./settings/settings";
 import { isIMESupported, LatexSuiteSettingTab } from "./settings/settings_tab";
 import { ICONS } from "./settings/ui/icons";
+import { LocalSnippetStore } from "./features/local_snippets";
+import { openLocalSnippetCreateModal, openLocalSnippetManagerModal } from "./features/local_snippets_ui";
 
 import { getEditorCommands, getVimEditorCommands } from "./features/editor_commands";
 import { getLatexSuiteConfigExtension } from "./snippets/codemirror/config";
@@ -25,6 +27,7 @@ export default class LatexSuitePlugin extends Plugin implements LatexSuitePlugin
 	settings: LatexSuitePluginSettings = EMPTY_SETTINGS;
 	CMSettings: LatexSuiteCMSettings = processLatexSuiteSettings([], this.settings);
 	editorExtensions: Extension[] = [];
+	localSnippetsStore!: LocalSnippetStore;
 	watcherCloser?: () => void;
 	disableMath = (view: EditorView) => {
 		try {
@@ -36,6 +39,10 @@ export default class LatexSuitePlugin extends Plugin implements LatexSuitePlugin
 
 	async onload() {
 		await this.loadSettings();
+
+		this.localSnippetsStore = new LocalSnippetStore(this);
+		this.attachLocalSnippetStore();
+		this.registerLocalSnippetEvents();
 
 		this.loadIcons();
 		this.addSettingTab(new LatexSuiteSettingTab(this.app, this));
@@ -176,9 +183,57 @@ export default class LatexSuitePlugin extends Plugin implements LatexSuitePlugin
 			this.watchFiles();
 		}
 		this.CMSettings = processLatexSuiteSettings(await this.getSnippets(becauseFileLocationUpdated, becauseFileUpdated), this.settings);
+		this.attachLocalSnippetStore();
 		this.setEditorExtensions();
 		// Request Obsidian to reconfigure CM extensions
 		this.app.workspace.updateOptions();
+	}
+
+	private attachLocalSnippetStore() {
+		if (this.localSnippetsStore) {
+			this.CMSettings.localSnippetStore = this.localSnippetsStore;
+		}
+	}
+
+	/**
+	 * - editor context menu: turn the current selection into a local snippet
+	 * - note rename / delete: keep the byFile map in sync
+	 */
+	private registerLocalSnippetEvents() {
+		this.localSnippetsStore.indexViews();
+		this.registerEvent(
+			this.app.workspace.on("layout-change", () => this.localSnippetsStore.indexViews()),
+		);
+		this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor, view) => {
+				const file = view.file;
+				if (!(file instanceof TFile) || file.extension !== "md") return;
+				menu.addItem((item) => {
+					item
+						.setTitle("Latex Suite: 创建局部 Snippet")
+						.onClick(() => {
+							openLocalSnippetCreateModal(this.localSnippetsStore, file, editor.getSelection());
+						});
+				});
+			}),
+		);
+
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				if (file instanceof TFile) {
+					void this.localSnippetsStore.renameFileSnippets(oldPath, file.path);
+					this.localSnippetsStore.indexViews();
+				}
+			}),
+		);
+
+		this.registerEvent(
+			this.app.vault.on("delete", (file) => {
+				if (file instanceof TFile) {
+					void this.localSnippetsStore.removeFileSnippets(file.path);
+				}
+			}),
+		);
 	}
 
 	// Set 'this.editorExtensions' based on the contents of 'this.CMSettings'

@@ -3,6 +3,7 @@ import { LatexSuitePluginSettings } from "./settings";
 export const EMPTY_SETTINGS: LatexSuitePluginSettings = {
 	snippets: "",
 	snippetVariables: "",
+	localSnippets: { items: [] },
 
 	// Basic settings
 	snippetsEnabled: false,

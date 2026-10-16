@@ -6,6 +6,8 @@ import { getContextPlugin } from "src/utils/context";
 import { CodeMirrorEditor } from "src/types/vim_types";
 import { LatexSuitePluginSettings } from "src/settings/settings";
 import { newlineMatrixShortcut} from "./matrix_shortcuts";
+import { canCycleOuterBracketSize, cycleOuterBracketSize } from "./cycle_bracket_size";
+import { openLocalSnippetManagerModal } from "./local_snippets_ui";
 import { insertNewlineAndIndent } from "@codemirror/commands";
 import { Transaction, Annotation, TransactionSpec } from "@codemirror/state";
 
@@ -153,10 +155,53 @@ function getToggleConcealCommand(plugin: LatexSuitePlugin) {
 }
 
 
+function getCycleBracketSizeCommand() {
+	return {
+		id: "latex-suite-cycle-bracket-size",
+		name: "Cycle size of selected parentheses",
+		editorCheckCallback: (checking: boolean, editor: Editor) => {
+			const view = editor.cm;
+
+			if (checking) return canCycleOuterBracketSize(view);
+			if (!canCycleOuterBracketSize(view)) return false;
+
+			cycleOuterBracketSize(view);
+
+			return;
+		},
+	}
+}
+
+
+function getCreateLocalSnippetCommand(plugin: LatexSuitePlugin) {
+	return {
+		id: "latex-suite-create-local-snippet",
+		name: "Create local snippet",
+		editorCheckCallback: (checking: boolean, editor: Editor) => {
+			if (checking) return true;
+			return plugin.localSnippetsStore.openCreateLocalSnippetModal(editor.cm);
+		},
+	}
+}
+
+function getManageLocalSnippetsCommand(plugin: LatexSuitePlugin) {
+	return {
+		id: "latex-suite-manage-local-snippets",
+		name: "Manage local snippets (notes / tags)",
+		callback: () => {
+			openLocalSnippetManagerModal(plugin.localSnippetsStore);
+		},
+	}
+}
+
+
 export const getEditorCommands = (plugin: LatexSuitePlugin) => {
 	return [
 		getBoxEquationCommand(),
 		getSelectEquationCommand(),
+		getCycleBracketSizeCommand(),
+		getCreateLocalSnippetCommand(plugin),
+		getManageLocalSnippetsCommand(plugin),
 		getEnableAllFeaturesCommand(plugin),
 		getDisableAllFeaturesCommand(plugin),
 		getToggleConcealCommand(plugin),
