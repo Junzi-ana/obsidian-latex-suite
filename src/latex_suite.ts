@@ -16,7 +16,6 @@ import { handleMathTooltip } from "./editor_extensions/math_tooltip";
 import { isComposing, forceEndComposition } from "./utils/editor_utils";
 import { LatexSuiteCMSettings } from "./settings/settings";
 import { Type } from "./parser/mathjax-parser";
-import { cycleOuterBracketSize, RESIZE_BRACKETS_KEY } from "./features/cycle_bracket_size";
 import type { Snippet } from "./snippets/snippets";
 
 export const handleUpdate = (update: ViewUpdate) => {
@@ -283,15 +282,6 @@ export const handleKeydown = (key: string, ctrlKey: boolean, isIME: boolean, vie
 		return false
 	}
 
-	// Bracket-size cycling: a selection-only visual operation, deliberately
-	// independent of the snippet engine (it should keep working when snippets
-	// are disabled). The key is only consumed when a selection actually has an
-	// outermost `(...)` group to resize; otherwise we fall through so normal
-	// typing, visual snippets or other keybindings behave as before.
-	if (key === RESIZE_BRACKETS_KEY && !ctrlKey && !isIME) {
-		if (cycleOuterBracketSize(view)) return true;
-	}
-
 	const settings = getLatexSuiteConfig(view);
 
 	if (
@@ -338,19 +328,6 @@ export function getKeymaps(settings: LatexSuiteCMSettings): LatexSuiteKeyBinding
 			const store = getLatexSuiteConfig(view).localSnippetStore;
 			if (!store) return false;
 			return store.openCreateLocalSnippetModal(view);
-		},
-	});
-
-	/*
-	 * Bracket-size cycling for selections. Registered first so it takes
-	 * priority over snippet triggers that share the same key (e.g. a future
-	 * visual snippet on "B"): the handler only returns true when it actually
-	 * resized something, otherwise the remaining keybindings are tried.
-	 */
-	keybindings.push({
-		key: RESIZE_BRACKETS_KEY,
-		run: function resizeOuterBrackets(view: EditorView) {
-			return cycleOuterBracketSize(view);
 		},
 	});
 
