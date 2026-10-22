@@ -5,7 +5,7 @@ import { LatexSuitePluginSettings, DEFAULT_SETTINGS, LatexSuiteCMSettings, proce
 import { isIMESupported, LatexSuiteSettingTab } from "./settings/settings_tab";
 import { ICONS } from "./settings/ui/icons";
 import { LocalSnippetStore } from "./features/local_snippets";
-import { openLocalSnippetCreateModal, openLocalSnippetManagerModal } from "./features/local_snippets_ui";
+import { openLocalSnippetCreateModal } from "./features/local_snippets_ui";
 
 import { getEditorCommands, getVimEditorCommands } from "./features/editor_commands";
 import { getLatexSuiteConfigExtension } from "./snippets/codemirror/config";
@@ -94,7 +94,7 @@ export default class LatexSuitePlugin extends Plugin implements LatexSuitePlugin
 		let data = v.parse(v.record(v.string(), v.any()), await this.loadData() ?? {});
 
 		// Migrate settings from v1.8.0 - v1.8.4
-		const shouldMigrateSettings = data ? "basicSettings" in data : false;
+		const shouldMigrateSettings = "basicSettings" in data;
 
 		// @ts-ignore
 		function migrateSettings(oldSettings: unknown): Partial<LatexSuitePluginSettings> {

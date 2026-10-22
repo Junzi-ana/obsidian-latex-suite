@@ -1,7 +1,9 @@
 import { EditorView, ViewPlugin, ViewUpdate, KeyBinding, runScopeHandlers } from "@codemirror/view";
 import { runSnippets } from "./features/run_snippets";
 import { runAutoFraction } from "./features/autofraction";
+import { runAutoBrackets, runClosingBracket } from "./features/auto_brackets";
 import { tabout, shouldTaboutByCloseBracket } from "./features/tabout";
+import { tabBackwardJump, tabForwardFallback } from "./features/tab_flow";
 import { addCellMatrixShortcut, exitMatrixShortCut, newlineMatrixShortcut, priorityTaboutMatrixShortcut } from "./features/matrix_shortcuts";
 
 import { getContextPlugin, getMathBoundsPlugin } from "./utils/context";
@@ -414,6 +416,12 @@ export function getKeymaps(settings: LatexSuiteCMSettings): LatexSuiteKeyBinding
 			return setSelectionToNextTabstop(view, true);
 		},
 	});
+
+	// Shift-Tab also walks back to the previous bracket or differential.
+	keybindings.push({
+		key: "Shift-Tab",
+		run: tabBackwardJump,
+	});
 	if (settings.autofractionEnabled) {
 		keybindings.push({
 			key: "/",
@@ -451,6 +459,22 @@ export function getKeymaps(settings: LatexSuiteCMSettings): LatexSuiteKeyBinding
 		keybindings.push(...matrixShortcuts);
 	}
 
+	// Goes before tabout, so that Tab closes an unclosed bracket instead of leaving the equation.
+	if (settings.autoBracketsOnTab) {
+		for (const pair of settings.autoBracketsDelimiters) {
+			keybindings.push({
+				key: "Tab",
+				run: function closeBracket(view: EditorView) {
+					const config = getLatexSuiteConfig(view);
+					if (!config.autoBracketsOnTab || !config.autoBracketsEnabled) return false;
+					const ctx = getContextPlugin(view);
+					if (!ctx.mode.inMath()) return false;
+					return runClosingBracket(view, ctx, pair);
+				},
+			});
+		}
+	}
+
 	const taboutShortcuts = [
 		{
 			key: settings.taboutTrigger,
@@ -472,6 +496,27 @@ export function getKeymaps(settings: LatexSuiteCMSettings): LatexSuiteKeyBinding
 	if (settings.taboutEnabled) {
 		keybindings.push(...taboutShortcuts);
 	}
+
+	// Placed last so that tabbing over an existing closing bracket wins over wrapping.
+	if (settings.autoBracketsEnabled) {
+		for (const pair of settings.autoBracketsDelimiters) {
+			keybindings.push({
+				key: pair[1],
+				run: function autoBrackets(view: EditorView) {
+					if (!getLatexSuiteConfig(view).autoBracketsEnabled) return false;
+					const ctx = getContextPlugin(view);
+					if (!ctx.mode.inMath()) return false;
+					return runAutoBrackets(view, ctx, pair);
+				},
+			});
+		}
+	}
+
+	// Runs last: inside math, Tab must never fall through to the editor's indent.
+	keybindings.push({
+		key: "Tab",
+		run: tabForwardFallback,
+	});
 
 	return keybindings.map((keybinding) => ({
 		...keybinding,

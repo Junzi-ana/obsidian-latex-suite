@@ -194,7 +194,10 @@ export class VisualSnippetNode extends BaseNode {
 }
 export class SnippetTabstopOnlyNode extends BaseNode {
 	constructor(snippet: string) {
-		super(() => new SnippetStringNode(snippet).parseSnippet({match: [], groups: {}}));
+		// Forward the real captures: replacement *functions* return plain text,
+		// and that text must expand `[[0]]`, `[[1]]`, … exactly like a string
+		// replacement does. Passing empty captures here silently disabled that.
+		super((options) => new SnippetStringNode(snippet).parseSnippet(options.captures));
 	}
 }
 

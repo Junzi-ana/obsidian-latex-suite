@@ -7,14 +7,47 @@ import * as v from "valibot"
 
 export type snippetDebugLevel = "off" | "info" | "verbose";
 
+/** A bracket pair, given as `[opening, closing]`. */
+export type DelimiterPair = [open: string, close: string];
+
+/**
+ * One row of a conditioned local snippet: when the selected capturing group
+ * captures `key`, the whole match is replaced by `output`.
+ */
+export type LocalSnippetConditionalRule = {
+	key: string;
+	output: string;
+};
+
+/**
+ * The rule table of a conditioned entry.
+ *
+ * `group` is the 0-based index of the capturing group the table keys come
+ * from: 0 means the first `(…)` in the trigger (i.e. `match[1]`), 1 the
+ * second, and so on. All rows share the same group.
+ */
+export type LocalSnippetConditional = {
+	rules: LocalSnippetConditionalRule[];
+	group?: number;
+};
+
 /**
  * A local (document / tag scoped) snippet entry, as edited in the local
  * snippet UI. Stored as structured JSON, so no manual backslash escaping is
  * needed (unlike the global snippet textarea).
+ *
+ * `replacementFn` is the JavaScript source of a `(match) => string | false`
+ * function. It is used for *conditioned* entries (one trigger, several
+ * variants); the plain `replacement` string is kept as a fallback so an entry
+ * degrades to static text instead of disappearing when the source fails to
+ * compile. `conditional.rules` mirrors the table the UI generated, which makes
+ * re-opening such an entry lossless.
  */
 export type LocalSnippetEntry = {
 	trigger: string;
 	replacement: string;
+	replacementFn?: string;
+	conditional?: LocalSnippetConditional;
 	options: string;
 	priority?: number;
 	description?: string;
@@ -85,12 +118,13 @@ export interface LatexSuiteBasicSettings {
 	mathPreviewBracketHighlighting: boolean;
 	mathPreviewLivePreviewDisplay: boolean;
 	autofractionSymbol: string;
-	autofractionBreakingChars: string;
 	matrixShortcutsEnabled: boolean;
 	taboutEnabled: boolean;
 	taboutExitEquationOnlyOnEOL: boolean;
 	autoEnlargeBrackets: boolean;
 	autoEnlargeBracketsSpace: boolean;
+	autoBracketsEnabled: boolean;
+	autoBracketsOnTab: boolean;
 	wordDelimiters: string;
 	snippetDebug: snippetDebugLevel;
 	vimEnabled: boolean;
@@ -119,6 +153,9 @@ export interface LatexSuiteRawSettings {
 	matrixShortcutsMacroNames: string;
 	taboutClosingSymbols: string;
 	autoEnlargeBracketsTriggers: string;
+	autoBracketsDelimiters: string;
+	autoBracketsOperators: string;
+	autoBracketsBoundaries: string;
 	forceMathLanguages: string;
 }
 
@@ -128,6 +165,9 @@ interface LatexSuiteParsedSettings {
 	matrixShortcutsMacroNames: string[];
 	taboutClosingSymbols: Set<string>;
 	autoEnlargeBracketsTriggers: string[];
+	autoBracketsDelimiters: DelimiterPair[];
+	autoBracketsOperators: string[];
+	autoBracketsBoundaries: string[];
 	forceMathLanguages: string[];
 }
 
@@ -163,13 +203,14 @@ export const DEFAULT_SETTINGS: LatexSuitePluginSettings = {
 	mathPreviewLivePreviewDisplay: false,
 	autofractionEnabled: true,
 	autofractionSymbol: "\\frac",
-	autofractionBreakingChars: "+-=\t",
 	matrixShortcutsEnabled: true,
 	taboutEnabled: true,
 	taboutExitEquationOnlyOnEOL: true,
 	taboutTrigger: "Tab",
 	autoEnlargeBrackets: true,
 	autoEnlargeBracketsSpace: true,
+	autoBracketsEnabled: true,
+	autoBracketsOnTab: true,
 	wordDelimiters: "., +-\\n\t:;!?\\/{}[]()=~$'\"|`<>*^%#@&",
 
 	// Raw settings
@@ -182,6 +223,9 @@ export const DEFAULT_SETTINGS: LatexSuitePluginSettings = {
 	matrixShortcutsMacroNames: "eqalign",
 	taboutClosingSymbols: "), ], \\rbrack, \\}, \\rbrace, \\rangle, \\rvert, \\rVert, \\rfloor, \\rceil, \\urcorner, }",
 	autoEnlargeBracketsTriggers: "sum, int, frac, prod, bigcup, bigcap",
+	autoBracketsDelimiters: "(), []",
+	autoBracketsOperators: "+, -, \\pm, \\mp, \\times, \\cdot, \\div, \\cup, \\cap, \\wedge, \\vee, \\oplus, \\otimes, \\circ, \\ast, \\star",
+	autoBracketsBoundaries: "=, \\le, \\leq, \\ge, \\geq, \\neq, \\ne, \\approx, \\equiv, \\sim, \\simeq, \\to, \\in, \\notin, \\subset, \\subseteq, \\supset, \\supseteq, \\Rightarrow, \\Leftarrow, \\Leftrightarrow, \\iff, \\implies, \\\\, &",
 	forceMathLanguages: "math",
 	snippetDebug: "off",
 	vimEnabled: false,
@@ -231,6 +275,12 @@ export function processLatexSuiteSettings(snippets: Snippet[], settings: LatexSu
 		// Add backslash to triggers that are LaTeX commands
 		autoEnlargeBracketsTriggers: strToArray(settings.autoEnlargeBracketsTriggers)
 			.map(trigger => /[A-Za-z]+/.test(trigger) ? `\\${trigger}` : trigger), 
+		// Every entry is one pair of brackets, e.g. "()" or "[]".
+		autoBracketsDelimiters: strToArray(settings.autoBracketsDelimiters)
+			.filter(pair => pair.length === 2)
+			.map(pair => [pair[0], pair[1]] as DelimiterPair),
+		autoBracketsOperators: strToArray(settings.autoBracketsOperators).filter(op => op !== ""),
+		autoBracketsBoundaries: strToArray(settings.autoBracketsBoundaries).filter(token => token !== ""),
 		forceMathLanguages: strToArray(settings.forceMathLanguages),
 	}
 }

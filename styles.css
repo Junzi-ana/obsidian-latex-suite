@@ -778,3 +778,246 @@ and limit the height.
 	gap: 0.3rem;
 	align-items: center;
 }
+
+/* ============================================================ */
+/* Local snippet workspace v5: collapse / bulk edit / conditioned */
+/* ============================================================ */
+.latex-suite-local-workspace-modal .ls-tools {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	flex: 0 0 auto;
+}
+.latex-suite-local-workspace-modal .ls-btn-icon {
+	padding: 0.4rem;
+	line-height: 0;
+	color: var(--text-muted);
+}
+.latex-suite-local-workspace-modal .ls-btn-icon:hover { color: var(--text-normal); }
+.latex-suite-local-workspace-modal .ls-btn-icon svg { width: 16px; height: 16px; }
+
+/* ---- collapsible groups ---- */
+.latex-suite-local-workspace-modal .ls-caret {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1rem;
+	height: 1rem;
+	flex: none;
+	color: var(--text-faint);
+}
+.latex-suite-local-workspace-modal .ls-caret svg { width: 14px; height: 14px; }
+.latex-suite-local-workspace-modal .ls-group-head {
+	cursor: pointer;
+	user-select: none;
+	border-radius: var(--radius-s);
+	padding: 0.15rem 0.3rem;
+	margin: 0 -0.3rem;
+}
+.latex-suite-local-workspace-modal .ls-group-head:hover {
+	background: var(--background-modifier-hover);
+}
+.latex-suite-local-workspace-modal .ls-group-head .ls-bind-check {
+	width: 15px;
+	height: 15px;
+	border-radius: 4px;
+}
+.latex-suite-local-workspace-modal .ls-bind-check.is-partial {
+	background: color-mix(in srgb, var(--interactive-accent) 45%, var(--background-primary));
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+/* ---- bulk selection ---- */
+.latex-suite-local-workspace-modal .ls-item.is-bulk { padding-left: 2.1rem; }
+.latex-suite-local-workspace-modal .ls-item-check {
+	position: absolute;
+	left: 0.55rem;
+	top: 0.5rem;
+	width: 15px;
+	height: 15px;
+	border-radius: 4px;
+}
+.latex-suite-local-workspace-modal .ls-item.is-checked {
+	border-color: var(--interactive-accent);
+	background: color-mix(in srgb, var(--interactive-accent) 10%, var(--background-primary));
+	box-shadow: inset 3px 0 0 var(--interactive-accent);
+}
+.latex-suite-local-workspace-modal .ls-seg-wide {
+	display: flex;
+	width: 100%;
+	flex-wrap: wrap;
+}
+.latex-suite-local-workspace-modal .ls-seg-wide .ls-seg-btn { flex: 1 1 auto; text-align: center; }
+
+/* ---- bulk panel ---- */
+.latex-suite-local-workspace-modal .ls-bulk-target {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	padding: 0.45rem 0.6rem;
+}
+.latex-suite-local-workspace-modal .ls-bulk-target-name {
+	flex: 1 1 auto;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.latex-suite-local-workspace-modal .ls-bulk-target-name.is-empty {
+	font-family: var(--font-interface);
+	font-style: italic;
+	color: var(--text-faint);
+}
+.latex-suite-local-workspace-modal .ls-btn-danger {
+	background: var(--background-modifier-error);
+	border-color: var(--background-modifier-error);
+	color: var(--text-on-accent);
+}
+.latex-suite-local-workspace-modal .ls-btn-danger:hover {
+	background: var(--background-modifier-error-hover);
+}
+
+/* ---- conditioned matching ---- */
+.latex-suite-local-workspace-modal .ls-adv-launch {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.4rem 0.55rem;
+	border: 1px dashed var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	cursor: pointer;
+}
+.latex-suite-local-workspace-modal .ls-adv-launch:hover {
+	border-color: var(--interactive-accent);
+	color: var(--text-normal);
+}
+.latex-suite-local-workspace-modal .ls-adv {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.55rem 0.65rem;
+	border: 1px solid color-mix(in srgb, var(--interactive-accent) 35%, var(--background-modifier-border));
+	border-radius: var(--radius-s);
+	background: color-mix(in srgb, var(--interactive-accent) 5%, transparent);
+}
+.latex-suite-local-workspace-modal .ls-adv-head {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	cursor: pointer;
+	user-select: none;
+}
+.latex-suite-local-workspace-modal .ls-adv-title { font-weight: 600; font-size: var(--font-ui-small); }
+.latex-suite-local-workspace-modal .ls-adv-badge {
+	margin-left: auto;
+	padding: 0.05rem 0.5rem;
+	border-radius: 999px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-accent);
+	background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+}
+.latex-suite-local-workspace-modal .ls-adv-close { margin-left: 0.25rem; }
+.latex-suite-local-workspace-modal .ls-adv-desc {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	line-height: 1.4;
+}
+.latex-suite-local-workspace-modal .ls-rules { display: flex; flex-direction: column; gap: 0.3rem; }
+.latex-suite-local-workspace-modal .ls-rule-row {
+	display: grid;
+	grid-template-columns: 2.8rem minmax(3.5rem, 0.7fr) minmax(6rem, 1.5fr) auto;
+	gap: 0.35rem;
+	align-items: center;
+}
+.latex-suite-local-workspace-modal .ls-rule-group {
+	padding-left: 0.35rem;
+	padding-right: 0.2rem;
+	text-align: center;
+	appearance: textfield;
+	-moz-appearance: textfield;
+}
+.latex-suite-local-workspace-modal .ls-rule-group::-webkit-outer-spin-button,
+.latex-suite-local-workspace-modal .ls-rule-group::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+.latex-suite-local-workspace-modal .ls-rule-head {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+.latex-suite-local-workspace-modal .ls-rule-del {
+	display: flex;
+	padding: 0.2rem;
+	border: none;
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-faint);
+	cursor: pointer;
+}
+.latex-suite-local-workspace-modal .ls-rule-del:hover {
+	color: var(--text-error);
+	background: var(--background-modifier-hover);
+}
+.latex-suite-local-workspace-modal .ls-rule-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.latex-suite-local-workspace-modal .ls-preview {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	padding: 0.4rem 0.55rem;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+}
+.latex-suite-local-workspace-modal .ls-preview-empty {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+.latex-suite-local-workspace-modal .ls-preview-row {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	word-break: break-all;
+}
+.latex-suite-local-workspace-modal .ls-preview-in { color: var(--text-muted); }
+.latex-suite-local-workspace-modal .ls-preview-arrow { color: var(--text-faint); }
+.latex-suite-local-workspace-modal .ls-preview-out { color: var(--text-normal); }
+.latex-suite-local-workspace-modal .ls-preview-row.is-miss .ls-preview-out {
+	color: var(--text-faint);
+	font-style: italic;
+}
+.latex-suite-local-workspace-modal .ls-preview-mark { display: flex; margin-left: auto; }
+.latex-suite-local-workspace-modal .ls-preview-row.is-ok .ls-preview-mark { color: var(--color-green); }
+.latex-suite-local-workspace-modal .ls-preview-row.is-miss .ls-preview-mark { color: var(--text-faint); }
+.latex-suite-local-workspace-modal .ls-preview-mark svg { width: 13px; height: 13px; }
+.latex-suite-local-workspace-modal .ls-code-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.4rem;
+}
+.latex-suite-local-workspace-modal .ls-code {
+	max-height: 9rem;
+	margin: 0.2rem 0 0;
+	padding: 0.45rem 0.55rem;
+	overflow: auto;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+

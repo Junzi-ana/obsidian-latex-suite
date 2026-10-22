@@ -49,6 +49,7 @@ export class LatexSuiteSettingTab extends PluginSettingTab {
 		this.displayMatrixShortcutsSettings();
 		this.displayTaboutSettings();
 		this.displayAutoEnlargeBracketsSettings();
+		this.displayAutoBracketsSettings();
 		this.displayAdvancedSnippetSettings();
 		this.displayExperimentalSettings();
 	}
@@ -315,7 +316,7 @@ export class LatexSuiteSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Enabled")
-			.setDesc("Whether auto-fraction is enabled.")
+			.setDesc("Whether auto-fraction is enabled. The numerator is scanned with the Operators and Boundaries lists of the Auto-brackets section, plus a space.")
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.autofractionEnabled)
 				.onChange(async (value) => {
@@ -350,19 +351,6 @@ export class LatexSuiteSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.autofractionExcludedEnvs)
 				.onChange(async (value) => {
 					this.plugin.settings.autofractionExcludedEnvs = value;
-					await this.plugin.saveSettings();
-				}));
-
-
-		new Setting(containerEl)
-			.setName("Breaking characters")
-			.setDesc("A list of characters that denote the start/end of a fraction. e.g. if + is included in the list, \"a+b/c\" will expand to \"a+\\frac{b}{c}\". If + is not in the list, it will expand to \"\\frac{a+b}{c}\".")
-			.addText(text => text
-				.setPlaceholder(DEFAULT_SETTINGS.autofractionBreakingChars)
-				.setValue(this.plugin.settings.autofractionBreakingChars)
-				.onChange(async (value) => {
-					this.plugin.settings.autofractionBreakingChars = value;
-
 					await this.plugin.saveSettings();
 				}));
 	}
@@ -490,6 +478,64 @@ export class LatexSuiteSettingTab extends PluginSettingTab {
 					this.plugin.settings.autoEnlargeBracketsSpace = value;
 					await this.plugin.saveSettings();
 				}))
+	}
+
+	private displayAutoBracketsSettings() {
+		const containerEl = this.containerEl;
+		this.addHeading(containerEl, "Auto-brackets", "parentheses");
+
+		new Setting(containerEl)
+			.setName("Enabled")
+			.setDesc("When a closing bracket is typed in math mode, insert its opening bracket in front of the innermost term. e.g. a+b then ) becomes (a+b).")
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.autoBracketsEnabled)
+				.onChange(async (value) => {
+					this.plugin.settings.autoBracketsEnabled = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName("Close on Tab")
+			.setDesc("Press Tab inside an unclosed bracket to insert its closing bracket, e.g. (a+b+c with the cursor after a+b becomes (a+b)+c. Without control characters one operator is included; k dots include k terms; k repetitions of one operator include k of its joins.")
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.autoBracketsOnTab)
+				.onChange(async (value) => {
+					this.plugin.settings.autoBracketsOnTab = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName("Bracket pairs")
+			.setDesc("Which pairs this works with, separated by commas and two characters each: opening then closing, e.g. (), []. The closing character is the key that inserts the opening one; the opening character is what Tab closes. Each pair also counts as one indivisible unit while scanning.")
+			.addText(text => text
+				.setPlaceholder(DEFAULT_SETTINGS.autoBracketsDelimiters)
+				.setValue(this.plugin.settings.autoBracketsDelimiters)
+				.onChange(async (value) => {
+					this.plugin.settings.autoBracketsDelimiters = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName("Operators")
+			.setDesc("Operators, separated by commas. The region keeps growing across them: with the cursor in a+b+c, one operator is included, so the bracket is placed as (a+b)+c.")
+			.addText(text => text
+				.setPlaceholder(DEFAULT_SETTINGS.autoBracketsOperators)
+				.setValue(this.plugin.settings.autoBracketsOperators)
+				.onChange(async (value) => {
+					this.plugin.settings.autoBracketsOperators = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName("Boundaries")
+			.setDesc("Tokens that the region never crosses, separated by commas, e.g. =, \\leq, &. They end both the backwards and the forwards scan, and they also end the numerator of auto-fraction.")
+			.addText(text => text
+				.setPlaceholder(DEFAULT_SETTINGS.autoBracketsBoundaries)
+				.setValue(this.plugin.settings.autoBracketsBoundaries)
+				.onChange(async (value) => {
+					this.plugin.settings.autoBracketsBoundaries = value;
+					await this.plugin.saveSettings();
+				}));
 	}
 
 	private displayAdvancedSnippetSettings() {

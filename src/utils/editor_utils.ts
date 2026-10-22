@@ -1,6 +1,6 @@
 import { Platform } from "obsidian";
 import { EditorView } from "@codemirror/view";
-import { NodeIterator, SyntaxNode, Tree, TreeCursor } from "@lezer/common";
+import { SyntaxNode, TreeCursor } from "@lezer/common";
 import { EditorState } from "@codemirror/state";
 import { Bounds } from "./context";
 
@@ -78,13 +78,6 @@ export function findMatchingBracket(text: string, start: number, openBracket: st
 	}
 
 	return null;
-}
-
-
-export function getOpenBracket(closeBracket: string) {
-	const openBrackets:{[closeBracket: string]: string} = {")": "(", "]": "[", "}": "{"};
-
-	return openBrackets[closeBracket];
 }
 
 
@@ -184,14 +177,6 @@ export function isBoundMultiline(view: EditorView, bounds: Bounds): boolean {
 	return startLine.number !== endLine.number;
 }
 
-export function* stackResolveIterate(tree: Tree, pos: number, side: -1 | 0 | 1) {
-	let nodeRef: NodeIterator | null = tree.resolveStack(pos, side);
-	while (nodeRef) {
-		yield nodeRef.node;
-		nodeRef = nodeRef.next;
-	}
-}
-
 export function* stackResolveNodeIterate(node: SyntaxNode, pos: number, side: -1 | 0 | 1) {
 	const cursor = node.cursor()
 	cursor.moveTo(pos, side)
@@ -201,15 +186,6 @@ export function* stackResolveNodeIterate(node: SyntaxNode, pos: number, side: -1
 		parent = parent.parent
 	}
 }
-
-export function* getChildren(node: SyntaxNode) {
-	let child = node.firstChild;
-	while (child) {
-		yield child;
-		child = child.nextSibling;
-	}
-}
-
 
 export function cumulativeSum(arr: number[]) {
 	const result: number[] = [];

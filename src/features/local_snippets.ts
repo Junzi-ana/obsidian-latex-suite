@@ -2,10 +2,17 @@ import type { EditorView } from "@codemirror/view";
 import { MarkdownView, TFile } from "obsidian";
 import type LatexSuitePlugin from "src/main";
 import type { Snippet } from "../snippets/snippets";
-import type { LocalSnippetData, LocalSnippetEntry, LocalSnippetItem } from "../settings/settings";
+import type {
+	LocalSnippetConditional,
+	LocalSnippetConditionalRule,
+	LocalSnippetData,
+	LocalSnippetEntry,
+	LocalSnippetItem,
+} from "../settings/settings";
 import { parseSnippetObjects } from "../snippets/parse";
 import { sortSnippets } from "../snippets/sort";
 import { openLocalSnippetCreateModal } from "./local_snippets_ui";
+import { compileReplacementFn } from "./local_snippet_conditional";
 
 /**
  * Store for local (document- and tag-scoped) snippets.
@@ -240,16 +247,44 @@ const cleanBinding = (v: unknown): string | undefined => {
 	return cleaned || undefined;
 };
 
+function normalizeConditional(raw: unknown): LocalSnippetConditional | undefined {
+	if (!raw || typeof raw !== "object") return undefined;
+	const source = raw as Record<string, unknown>;
+	const rules = source.rules;
+	if (!Array.isArray(rules)) return undefined;
+	const out: LocalSnippetConditionalRule[] = [];
+	for (const candidate of rules) {
+		if (!candidate || typeof candidate !== "object") continue;
+		const rule = candidate as Record<string, unknown>;
+		if (typeof rule.key !== "string" || typeof rule.output !== "string") continue;
+		out.push({ key: rule.key, output: rule.output });
+	}
+	if (!out.length) return undefined;
+	const group =
+		typeof source.group === "number" && Number.isFinite(source.group) && source.group >= 0
+			? Math.trunc(source.group)
+			: undefined;
+	return { rules: out, ...(group !== undefined && { group }) };
+}
+
 function normalizeEntry(raw: unknown): LocalSnippetEntry | null {
 	if (!raw || typeof raw !== "object") return null;
 	const e = raw as Record<string, unknown>;
-	if (typeof e.trigger !== "string" || typeof e.replacement !== "string") return null;
+	if (typeof e.trigger !== "string") return null;
+	const replacement = typeof e.replacement === "string" ? e.replacement : "";
+	const replacementFn =
+		typeof e.replacementFn === "string" && e.replacementFn.trim() ? e.replacementFn : undefined;
+	// a conditioned entry may legitimately have no static replacement
+	if (!replacement && !replacementFn) return null;
 	const options = typeof e.options === "string" ? e.options : "";
 	const priority = typeof e.priority === "number" && Number.isFinite(e.priority) ? e.priority : undefined;
 	const description = typeof e.description === "string" && e.description ? e.description : undefined;
+	const conditional = normalizeConditional(e.conditional);
 	return {
 		trigger: e.trigger,
-		replacement: e.replacement,
+		replacement,
+		...(replacementFn !== undefined && { replacementFn }),
+		...(conditional !== undefined && { conditional }),
 		options,
 		...(priority !== undefined && { priority }),
 		...(description !== undefined && { description }),
@@ -323,12 +358,26 @@ function normalizeData(raw: unknown): LocalSnippetData {
 	return { items };
 }
 
+/**
+ * Conditioned entries store the *source* of a replacement function instead of
+ * a static replacement. Compile it here; when compilation fails we fall back
+ * to the plain `replacement` string, so a broken entry degrades to static text
+ * instead of vanishing from the editor.
+ */
+function toRawSnippet(item: LocalSnippetItem): Record<string, unknown> {
+	const { replacementFn, conditional: _conditional, ...rest } = item;
+	void _conditional; // UI-only mirror of the table, not part of the snippet schema
+	if (!replacementFn) return rest;
+	const fn = compileReplacementFn(replacementFn);
+	return fn ? { ...rest, replacement: fn } : rest;
+}
+
 /** Parse raw items into Snippet instances (invalid items are skipped). */
 function parseEntries(items: LocalSnippetItem[]): Snippet[] {
 	const parsed: Snippet[] = [];
 	for (const item of items) {
 		try {
-			parsed.push(...parseSnippetObjects([item]));
+			parsed.push(...parseSnippetObjects([toRawSnippet(item)]));
 		} catch (e) {
 			console.error("Failed to parse local snippet, skipping:", item, e);
 		}

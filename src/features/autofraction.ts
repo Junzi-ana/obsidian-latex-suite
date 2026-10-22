@@ -1,12 +1,13 @@
 import { EditorView } from "@codemirror/view";
 import { SelectionRange } from "@codemirror/state";
-import { findMatchingBracket, getOpenBracket } from "src/utils/editor_utils";
+import { findMatchingBracket } from "src/utils/editor_utils";
 import { queueSnippet } from "src/snippets/codemirror/snippet_queue_state_field";
 import { expandSnippets } from "src/snippets/snippet_management";
 import { autoEnlargeBrackets } from "./auto_enlarge_brackets";
 import { Context } from "src/utils/context";
 import { getLatexSuiteConfig } from "src/snippets/codemirror/config";
 import { ArrayNode, emptyInsertOptions, TabstopNode, TextNode } from "src/snippets/luasnip_api/node";
+import { findNumerator } from "./scan";
 
 
 export const runAutoFraction = (view: EditorView, ctx: Context): boolean => {
@@ -46,8 +47,11 @@ export const runAutoFractionCursor = (view: EditorView, ctx: Context, range: Sel
 	const eqnStart = result.inner_start;
 
 
-	let curLine = view.state.sliceDoc(eqnStart, to);
+	const curLine = view.state.sliceDoc(eqnStart, to);
+
 	let start = eqnStart;
+	// Where the numerator ends: the control tokens after it are left out.
+	let end = to;
 
 	if (from != to) {
 		// We have a selection
@@ -56,43 +60,33 @@ export const runAutoFractionCursor = (view: EditorView, ctx: Context, range: Sel
 		start = from;
 	}
 	else {
-		// Find the contents of the fraction
-		// Match everything except spaces and +-, but allow these characters in brackets
+		// Find the contents of the fraction.
 
-		// Also, allow spaces after greek letters
-		// By replacing spaces after greek letters with a dummy character (#)
+		// Allow spaces after greek letters by replacing them with a dummy
+		// character (#). One character for one, so the indices still line up.
 		regex.lastIndex = 0;
-		curLine = curLine.replace(regex, "$1#$2");
+		const scanned = curLine.replace(regex, "$1#$2");
 
+		// The numerator shares the Operators and Boundaries lists of
+		// auto-brackets, plus a space, which always ends it. Operators are
+		// counted rather than cut, so the control tokens (k dots, k repetitions
+		// of one operator) pick how many terms go into the numerator.
+		const found = findNumerator(scanned, {
+			pairs: settings.autoBracketsDelimiters,
+			operators: settings.autoBracketsOperators,
+			boundaries: [" ", ...settings.autoBracketsBoundaries],
+		});
+		if (found === null) return false;
 
-		for (let i = curLine.length - 1; i >= 0; i--) {
-			const curChar = curLine.charAt(i)
-
-			if ([")", "]", "}"].contains(curChar)) {
-				const closeBracket = curChar;
-				const openBracket = getOpenBracket(closeBracket);
-
-				const j = findMatchingBracket(curLine, i, openBracket, closeBracket, true);
-
-				if (j === null) return false;
-
-				// Skip to the beginnning of the bracket
-				i = j;
-			}
-
-
-			if (" $([{\n".concat(settings.autofractionBreakingChars).contains(curChar)) {
-				start = i + 1 + eqnStart;
-				break;
-			}
-		}
+		start = found.start + eqnStart;
+		end = found.end + eqnStart;
 	}
 
 	// Don't run on an empty line
 	if (start === to) { return false; }
 
 	// Run autofraction
-	let numerator = view.state.sliceDoc(start, to);
+	let numerator = view.state.sliceDoc(start, end);
 
 	// Remove unnecessary outer parentheses
 	if (numerator.at(0) === "(" && numerator.at(-1) === ")") {
