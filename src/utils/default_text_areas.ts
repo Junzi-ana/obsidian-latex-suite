@@ -27,6 +27,9 @@ export const textArea = [
 	{ name: "mbox" },
 	{ name: "fbox" },
 	{ name: "framebox" },
+	{ name: "label" },
+	{ name: "ref" },
+	{ name: "eqref" },
 ] as const satisfies readonly MacroArea[];
 
 /**
@@ -51,10 +54,6 @@ export const allTextAreas = [...textArea, ...snippetLessArea] as const;
  * List of math fonts/ math commands. I don't know if they should treated as text since they are technically math environments.
  */
 const mathFonts = [
-	"label", // labels don't work properly in mathjax. See https://physics.meta.stackexchange.com/questions/5396/using-labels-with-mathjax, 
-	// but labels can't be overwritten and everytime the equation is changed the label gets recompiled and the reference is lost till obsidian reloads itself.
-	"ref", // math is allowed for some reason
-	"eqref", // math is allowed for some reason
 	"operatorname",
 	"operatorname*",
 	"DeclareMathOperator",

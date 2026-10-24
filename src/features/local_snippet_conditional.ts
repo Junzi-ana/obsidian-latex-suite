@@ -102,9 +102,7 @@ function matchingParen(source: string, start: number): number {
 			continue;
 		}
 		if (ch === "[") {
-			for (i++; i < source.length && source[i] !== "]"; i++) {
-				if (source[i] === "\\") i++;
-			}
+			i = charClassEnd(source, i);
 			continue;
 		}
 		if (ch === "(") depth++;
@@ -126,9 +124,7 @@ function firstAlternative(inner: string): string {
 			continue;
 		}
 		if (ch === "[") {
-			for (i++; i < inner.length && inner[i] !== "]"; i++) {
-				if (inner[i] === "\\") i++;
-			}
+			i = charClassEnd(inner, i);
 			continue;
 		}
 		if (ch === "(") depth++;
@@ -138,57 +134,88 @@ function firstAlternative(inner: string): string {
 	return inner;
 }
 
+/** Index of the `]` closing the character class opened at `open`. */
+function charClassEnd(source: string, open: number): number {
+	for (let j = open + 1; j < source.length; j++) {
+		if (source[j] === "\\") {
+			j++;
+			continue;
+		}
+		if (source[j] === "]") return j;
+	}
+	return source.length;
+}
+
+/** Sample text for an escaped regex element: \d -> "0", \w -> "a", \s -> " ". */
+const escapedSample = (escaped: string): string =>
+	escaped === "d" ? "0" : escaped === "w" ? "a" : escaped === "s" ? " " : escaped;
+
+/** Sample text for the inside of a character class, best effort. */
+function charClassSample(inner: string): string {
+	let candidate = "";
+	for (let j = 0; j < inner.length; j++) {
+		if (inner[j] === "\\") {
+			const s = escapedSample(inner[j + 1] ?? "");
+			if (!candidate && s) candidate = s;
+			j++;
+			continue;
+		}
+		if (!candidate && inner[j] !== "-" && inner[j] !== "^") candidate = inner[j];
+	}
+	return candidate || "a";
+}
+
+/** Peel a `(?:`, `(?<name>` prefix or an empty lookahead off a group body. */
+const peelGroupBody = (body: string): { body: string; isCapture: boolean } => {
+	if (body.startsWith("?:")) return { body: body.slice(2), isCapture: false };
+	if (body.startsWith("?=") || body.startsWith("?!")) return { body: "", isCapture: false };
+	if (body.startsWith("?<")) {
+		const close = body.indexOf(">");
+		return { body: close === -1 ? "" : body.slice(close + 1), isCapture: true };
+	}
+	return { body, isCapture: true };
+};
+
+/** Shared state while sampling a whole trigger: which capture group gets filled. */
+interface SampleFill {
+	index: number;
+	text: string;
+}
+
 /** One representative character sequence for a regex fragment (best effort). */
-function sampleOf(fragment: string): string {
+function sampleOf(fragment: string, fill?: SampleFill, captures?: { count: number }): string {
 	const inner = firstAlternative(fragment);
 	let out = "";
 	for (let i = 0; i < inner.length; i++) {
 		const ch = inner[i];
 		if (ch === "\\") {
-			const next = inner[i + 1] ?? "";
-			if (next === "d") out += "0";
-			else if (next === "w") out += "a";
-			else if (next === "s") out += " ";
-			else if (next === "b" || next === "B") out += "";
-			else out += next;
+			out += escapedSample(inner[i + 1] ?? "");
 			i++;
 			continue;
 		}
 		if (ch === "[") {
-			let j = i + 1;
-			if (inner[j] === "^") {
-				out += "a";
-				for (; j < inner.length && inner[j] !== "]"; j++) {
-					if (inner[j] === "\\") j++;
-				}
-				i = j;
-				continue;
-			}
-			let candidate = "";
-			for (; j < inner.length && inner[j] !== "]"; j++) {
-				if (inner[j] === "\\") {
-					const escaped = inner[j + 1] ?? "";
-					candidate = candidate || (escaped === "d" ? "0" : escaped === "w" ? "a" : escaped === "s" ? " " : escaped);
-					j++;
-					continue;
-				}
-				if (!candidate && inner[j] !== "-") candidate = inner[j];
-			}
-			out += candidate || "a";
-			i = j;
+			const close = charClassEnd(inner, i);
+			out += charClassSample(inner.slice(i + 1, close));
+			i = close;
 			continue;
 		}
 		if (ch === "(") {
 			const end = matchingParen(inner, i);
 			if (end === -1) {
-				out += "";
 				i = inner.length;
 				continue;
 			}
-			let body = inner.slice(i + 1, end);
-			if (body.startsWith("?:")) body = body.slice(2);
-			else if (body.startsWith("?=") || body.startsWith("?!")) body = "";
-			out += body ? sampleOf(body) : "";
+			const peeled = peelGroupBody(inner.slice(i + 1, end));
+			if (peeled.isCapture && fill && captures) {
+				if (captures.count === fill.index) {
+					out += fill.text;
+					captures.count++;
+					i = end;
+					continue;
+				}
+				captures.count++;
+			}
+			out += peeled.body ? sampleOf(peeled.body, fill, captures) : "";
 			i = end;
 			continue;
 		}
@@ -200,7 +227,6 @@ function sampleOf(fragment: string): string {
 			continue;
 		}
 		if (ch === "*" || ch === "+" || ch === "?") {
-			if (ch === "?" && out === "") out += "";
 			continue;
 		}
 		if (ch === "{") {
@@ -219,74 +245,7 @@ function sampleOf(fragment: string): string {
  * preview; the real input comes from the editor.
  */
 export function expandConditionalExample(trigger: string, key: string, group = 0): string {
-	let out = "";
-	let captureIndex = 0;
-	for (let i = 0; i < trigger.length; i++) {
-		const ch = trigger[i];
-		if (ch === "\\") {
-			const next = trigger[i + 1] ?? "";
-			if (next === "d") out += "0";
-			else if (next === "w") out += "a";
-			else if (next === "s") out += " ";
-			else out += next;
-			i++;
-			continue;
-		}
-		if (ch === "[") {
-			let j = i + 1;
-			let candidate = "";
-			for (; j < trigger.length && trigger[j] !== "]"; j++) {
-				if (trigger[j] === "\\") {
-					const escaped = trigger[j + 1] ?? "";
-					candidate = candidate || (escaped === "d" ? "0" : escaped === "w" ? "a" : escaped);
-					j++;
-					continue;
-				}
-				if (!candidate && trigger[j] !== "-" && trigger[j] !== "^") candidate = trigger[j];
-			}
-			out += candidate || "a";
-			i = j;
-			continue;
-		}
-		if (ch === "(") {
-			const end = matchingParen(trigger, i);
-			if (end === -1) {
-				i = trigger.length;
-				continue;
-			}
-			const body = trigger.slice(i + 1, end);
-			const isCapture = body[0] !== "?" || (body[1] === "<" && body[2] !== "=" && body[2] !== "!");
-			if (isCapture && captureIndex === Math.max(0, group)) {
-				out += key;
-				captureIndex++;
-			} else {
-				if (isCapture) captureIndex++;
-				let innerBody = body;
-				if (innerBody.startsWith("?:")) innerBody = innerBody.slice(2);
-				else if (innerBody.startsWith("?=") || innerBody.startsWith("?!")) innerBody = "";
-				else if (innerBody.startsWith("?<")) {
-					const close = innerBody.indexOf(">");
-					innerBody = close === -1 ? "" : innerBody.slice(close + 1);
-				}
-				out += innerBody ? sampleOf(innerBody) : "";
-			}
-			i = end;
-			continue;
-		}
-		if (ch === ")" || ch === "^" || ch === "$") continue;
-		if (ch === ".") {
-			out += "a";
-			continue;
-		}
-		if (ch === "*" || ch === "+" || ch === "?") continue;
-		if (ch === "{") {
-			const end = trigger.indexOf("}", i);
-			i = end === -1 ? i : end;
-			continue;
-		}
-		out += ch;
-	}
-	return out;
+	return sampleOf(trigger, { index: Math.max(0, group), text: key }, { count: 0 });
 }
 
 export type ConditionalPreviewRow = {

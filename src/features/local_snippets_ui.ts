@@ -169,6 +169,23 @@ class LocalSnippetWorkspaceModal extends Modal {
 	// List (right)                                                       //
 	// ------------------------------------------------------------------ //
 
+	/** The three panes all need refreshing when selection or mode changes. */
+	private rerenderAll() {
+		this.renderHeader();
+		this.renderLeft();
+		this.renderList();
+	}
+
+	/** A styled checkbox span; the click handler stays with the caller. */
+	private makeCheckbox(parent: HTMLElement, checked: boolean, opts?: { partial?: boolean; title?: string; extraCls?: string }): HTMLElement {
+		const base = `ls-bind-check${opts?.extraCls ? ` ${opts.extraCls}` : ""}`;
+		const cls = `${base}${checked ? " is-checked" : opts?.partial ? " is-partial" : ""}`;
+		const box = parent.createSpan(opts?.title ? { cls, attr: { title: opts.title } } : { cls });
+		if (checked) setIcon(box.createSpan({ cls: "ls-bind-tick" }), "check");
+		else if (opts?.partial) setIcon(box.createSpan({ cls: "ls-bind-tick" }), "minus");
+		return box;
+	}
+
 	private renderList() {
 		const { rightEl } = this;
 		const scrollTop = rightEl.scrollTop;
@@ -200,16 +217,12 @@ class LocalSnippetWorkspaceModal extends Modal {
 			const all = tools.createEl("button", { cls: "ls-btn ls-btn-ghost", text: "全选" });
 			all.addEventListener("click", () => {
 				for (const index of this.visibleIndices()) this.selected.add(index);
-				this.renderHeader();
-				this.renderLeft();
-				this.renderList();
+				this.rerenderAll();
 			});
 			const none = tools.createEl("button", { cls: "ls-btn ls-btn-ghost", text: "清除" });
 			none.addEventListener("click", () => {
 				this.selected.clear();
-				this.renderHeader();
-				this.renderLeft();
-				this.renderList();
+				this.rerenderAll();
 			});
 			const done = tools.createEl("button", { cls: "ls-btn ls-btn-light", text: "完成" });
 			done.addEventListener("click", () => this.exitBulk());
@@ -289,15 +302,10 @@ class LocalSnippetWorkspaceModal extends Modal {
 			if (this.mode === "bulk") {
 				const indices = filtered.map((entry) => entry.index);
 				const selectedCount = indices.filter((index) => this.selected.has(index)).length;
-				const box = groupHead.createSpan({
-					cls: `ls-bind-check${selectedCount === indices.length ? " is-checked" : selectedCount ? " is-partial" : ""}`,
-					attr: { title: "选中 / 取消整组" },
+				const box = this.makeCheckbox(groupHead, selectedCount === indices.length, {
+					partial: selectedCount > 0 && selectedCount < indices.length,
+					title: "选中 / 取消整组",
 				});
-				if (selectedCount === indices.length) {
-					setIcon(box.createSpan({ cls: "ls-bind-tick" }), "check");
-				} else if (selectedCount) {
-					setIcon(box.createSpan({ cls: "ls-bind-tick" }), "minus");
-				}
 				box.addEventListener("click", (ev) => {
 					ev.stopPropagation();
 					const allSelected = selectedCount === indices.length;
@@ -305,9 +313,7 @@ class LocalSnippetWorkspaceModal extends Modal {
 						if (allSelected) this.selected.delete(index);
 						else this.selected.add(index);
 					}
-					this.renderHeader();
-					this.renderLeft();
-					this.renderList();
+					this.rerenderAll();
 				});
 			}
 
@@ -344,10 +350,7 @@ class LocalSnippetWorkspaceModal extends Modal {
 				});
 
 				if (this.mode === "bulk") {
-					const box = row.createSpan({
-						cls: `ls-bind-check ls-item-check${isChecked ? " is-checked" : ""}`,
-					});
-					if (isChecked) setIcon(box.createSpan({ cls: "ls-bind-tick" }), "check");
+					this.makeCheckbox(row, isChecked, { extraCls: "ls-item-check" });
 				}
 
 				const del = row.createEl("button", {
@@ -387,9 +390,7 @@ class LocalSnippetWorkspaceModal extends Modal {
 					if (this.mode === "bulk") {
 						if (this.selected.has(index)) this.selected.delete(index);
 						else this.selected.add(index);
-						this.renderHeader();
-						this.renderLeft();
-						this.renderList();
+						this.rerenderAll();
 					} else {
 						this.startEditing(item);
 					}
@@ -567,9 +568,7 @@ class LocalSnippetWorkspaceModal extends Modal {
 		this.tagCustomOpen = false;
 		this.customDraft = "";
 		this.resetConditional();
-		this.renderHeader();
-		this.renderLeft();
-		this.renderList();
+		this.rerenderAll();
 		this.focusTrigger();
 	}
 
@@ -599,17 +598,13 @@ class LocalSnippetWorkspaceModal extends Modal {
 		this.bulkDropFile = false;
 		this.bulkUnbindFile = false;
 		this.bulkUnbindTags.clear();
-		this.renderHeader();
-		this.renderLeft();
-		this.renderList();
+		this.rerenderAll();
 	}
 
 	private exitBulk() {
 		this.mode = "new";
 		this.selected.clear();
-		this.renderHeader();
-		this.renderLeft();
-		this.renderList();
+		this.rerenderAll();
 		this.focusTrigger();
 	}
 
@@ -1473,9 +1468,7 @@ class LocalSnippetWorkspaceModal extends Modal {
 
 		if (this.mode === "edit" && this.editKey === key) this.resetToNew();
 		else {
-			this.renderHeader();
-			this.renderLeft();
-			this.renderList();
+			this.rerenderAll();
 		}
 	}
 }
